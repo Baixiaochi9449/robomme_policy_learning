@@ -70,7 +70,7 @@ class RoboMMEDataset(Dataset):
                     state_emb_dim=self.state_emb_dim,
                     token_drop_stride=self.streaming_obs_horizon // 2,
                 )
-            elif self.history_config.representation_type == "recurrent":
+            elif self.history_config.representation_type in ["recurrent", "pi05_v2"]:
                 self.mem_buffer = MemoryBufferRecurrent(
                     num_views=self.num_views,
                     img_emb_dim=self.img_emb_dim,
@@ -101,7 +101,7 @@ class RoboMMEDataset(Dataset):
                 os.path.join(self.feature_dir, f"episode_{epis_idx}", f"token_emb_{idx}.npy")
             )
         
-        if self.history_config.representation_type == "recurrent":
+        if self.history_config.representation_type in ["recurrent", "pi05_v2"]:
             # load_vector_fn = load_vector_file_lru4096 if self.use_lru else load_vector_file
             load_vector_fn = load_vector_file
             max_workers = min(48, max(4, len(history_paths)))
@@ -236,7 +236,7 @@ class RoboMMEDataset(Dataset):
                 data["static_state_emb"] = self._normalize_state(static_state_emb)
                 data["static_mask"] = static_mask
 
-            elif self.history_config.representation_type == "recurrent":             
+            elif self.history_config.representation_type in ["recurrent", "pi05_v2"]:             
                 recur_img_emb, recur_pos_emb, recur_state_emb, recur_mask = (
                     self.prepare_token_recurrent(
                         epis_idx, step_idx, exec_start_idx)

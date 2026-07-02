@@ -1,0 +1,42 @@
+budget: 64
+num_views: 1
+token_per_image: 64
+streaming_obs_horizon: 16
+use_pos_emb: true
+use_state_emb: true
+memory_token_dim: 1024
+
+representation_type: pi05_v2
+integration_type: dynamic_lora
+
+memory_feature:
+  img:
+    input_dim: 1152
+  pos:
+    input_dim: 2
+    hidden_dim: 64
+  state:
+    input_dim: 8
+    hidden_dim: 64
+
+recurrent_memory:
+  type: pi05_v2
+  max_recur_steps: 64
+  max_pretraj_steps: 40
+  max_input_tokens: 4096
+  mini_batch_size: 64
+
+pi05_v2_memory:
+  history_deltas: [-12, -4, -1]
+  expert_dim: 1024
+  ff_dim: 2048
+  encoder_heads: 8
+  detach_vision_features: true
+
+dynamic_lora:
+  rank: 8
+  basis_count: 4
+  hidden_dim: 2048
+  target_layers: [17]
+  target_modules: ["q", "v"]
+  scale_init: 0.0

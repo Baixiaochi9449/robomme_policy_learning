@@ -51,7 +51,7 @@ class MME_VLA_Policy:
     def _prepare_mem_buffer(self):
         if self.config is None or self.config.representation_type == "symbolic":
             self.mem_buffer = None
-        elif self.config.representation_type == "recurrent":
+        elif self.config.representation_type in ["recurrent", "pi05_v2"]:
             self.mem_buffer = MemoryBufferRecurrent(
                 num_views=self.config.num_views,
                 img_emb_dim=self.config.memory_feature.img.input_dim,
@@ -130,7 +130,7 @@ class MME_VLA_Policy:
         if self.config is None or self.config.representation_type == "symbolic":
             return inputs
         
-        if self.config.representation_type == "recurrent":
+        if self.config.representation_type in ["recurrent", "pi05_v2"]:
             history_feats_gather_fn = self.mem_buffer.default_history_feats_gather_fn
             recur_image_emb, recur_pos_emb, recur_state_emb, recur_mask = \
                 self.mem_buffer.prepare_token_recurrent(

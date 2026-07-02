@@ -153,7 +153,7 @@ class HistoryPi0Config(Pi0Config):
                             jnp.float32,
                         ),
                     )
-                elif self.history_config.representation_type == "recurrent":
+                elif self.history_config.representation_type in ["recurrent", "pi05_v2"]:
                     observation_spec = HistAugObservation.from_base_obs(
                         base_obs_spec,
                         recur_image_emb=jax.ShapeDtypeStruct(
@@ -227,6 +227,7 @@ class HistoryPi0Config(Pi0Config):
             filters.extend([
                 nnx.Not(nnx_utils.PathRegex(".*lora.*")),
                 nnx.Not(nnx_utils.PathRegex(".*mem.*")),
+                nnx.Not(nnx_utils.PathRegex(".*dynamic_lora_hypernet.*")),
             ])
             return nnx.Any(nnx.All(*filters), nnx_utils.PathRegex(".*img.*"))
         else:      
@@ -248,8 +249,8 @@ class HistoryPi0(BaseModel):
             self.history_config = config.history_config
             self.integration_type = config.history_config.integration_type
             self.representation_type = config.history_config.representation_type
-            assert self.integration_type in ["context", "modulation", "expert"]
-            assert self.representation_type in ["perceptual", "recurrent", "symbolic"]
+            assert self.integration_type in ["context", "modulation", "expert", "dynamic_lora"]
+            assert self.representation_type in ["perceptual", "recurrent", "symbolic", "pi05_v2"]
 
             if self.representation_type == "perceptual":
                 from mme_vla_suite.models.representation.percep_mem import (
@@ -268,6 +269,23 @@ class HistoryPi0(BaseModel):
 
                 self.mem_encoder = RecurrentMemory(
                     config=self.history_config,
+                    rngs=rngs,
+                    dtype=config.dtype,
+                )
+            elif self.representation_type == "pi05_v2":
+                from mme_vla_suite.models.representation.pi05_v2_mem import (
+                    DynamicLoRABasisHyperNet,
+                    Pi05V2MemoryEncoder,
+                )
+
+                self.mem_encoder = Pi05V2MemoryEncoder(
+                    config=self.history_config,
+                    rngs=rngs,
+                    dtype=config.dtype,
+                )
+                self.dynamic_lora_hypernet = DynamicLoRABasisHyperNet(
+                    config=self.history_config,
+                    action_expert_config=action_expert_config,
                     rngs=rngs,
                     dtype=config.dtype,
                 )
@@ -413,6 +431,18 @@ class HistoryPi0(BaseModel):
             na_mask = None
             stats = None
         return tokens, input_mask, ar_mask, na_mask, stats
+
+    @at.typecheck
+    def build_dynamic_lora_params(self, obs: HistAugObservation):
+        if self.integration_type != "dynamic_lora":
+            return None, None
+        memory_latent, stats = self.mem_encoder(
+            obs.recur_image_emb,
+            obs.recur_mask,
+            obs.recur_pos_emb,
+            obs.recur_state_emb,
+        )
+        return self.dynamic_lora_hypernet(memory_latent), stats
 
     @at.typecheck
     def embed_prefix(
@@ -578,6 +608,9 @@ class HistoryPi0(BaseModel):
         suffix_tokens, suffix_mask, suffix_ar_mask, suffix_na_mask, adarms_cond = (
             self.embed_suffix(observation, x_t, time)
         )
+        dynamic_lora_params, dynamic_lora_stats = self.build_dynamic_lora_params(observation)
+        if dynamic_lora_stats is not None:
+            stats = dynamic_lora_stats
         
         if self.integration_type == "expert":
             mem_tokens, mem_input_mask, mem_ar_mask, mem_na_mask, stats = (
@@ -629,6 +662,7 @@ class HistoryPi0(BaseModel):
                 mask=attn_mask,
                 positions=positions,
                 adarms_cond=[None, adarms_cond],
+                dynamic_lora_params=dynamic_lora_params,
             )
 
         v_t = self.action_out_proj(suffix_out[:, -self.action_horizon :])
@@ -656,6 +690,8 @@ class HistoryPi0(BaseModel):
             noise = jax.random.normal(
                 rng, (batch_size, self.action_horizon, self.action_dim)
             )
+
+        dynamic_lora_params, _ = self.build_dynamic_lora_params(observation)
 
         if self.integration_type == "expert":
             mem_tokens, mem_input_mask, mem_ar_mask, mem_na_mask, _ = self.embed_memory(observation)
@@ -692,7 +728,10 @@ class HistoryPi0(BaseModel):
                 prefix_attn_mask = make_attn_mask(prefix_mask, prefix_ar_mask)
             positions = jnp.cumsum(prefix_mask, axis=1) - 1
             _, kv_cache = self.PaliGemma.llm(
-                [prefix_tokens, None], mask=prefix_attn_mask, positions=positions
+                [prefix_tokens, None],
+                mask=prefix_attn_mask,
+                positions=positions,
+                dynamic_lora_params=dynamic_lora_params,
             )
             
 
@@ -752,6 +791,7 @@ class HistoryPi0(BaseModel):
                     positions=positions,
                     kv_cache=kv_cache,
                     adarms_cond=[None, adarms_cond],
+                    dynamic_lora_params=dynamic_lora_params,
                 )
 
             assert prefix_out is None
