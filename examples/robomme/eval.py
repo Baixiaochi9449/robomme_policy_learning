@@ -308,6 +308,7 @@ def evaluate(args: Args):
 
             env_runner = EnvRunner(task_name, video_save_dir, max_steps=args.max_steps)
             num_episodes = env_runner.num_episodes
+            #如果要修改，可以在这里修改num_episodes的值，num_episodes = min(env_runner.num_episodes, 10)。后期可以改成一个外部传入的参数。
 
             success_flag = "unknown"
 
