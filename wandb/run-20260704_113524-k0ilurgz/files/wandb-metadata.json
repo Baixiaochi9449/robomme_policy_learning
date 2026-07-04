@@ -1,0 +1,75 @@
+{
+  "os": "Linux-6.17.0-23-generic-x86_64-with-glibc2.39",
+  "python": "CPython 3.11.14",
+  "startedAt": "2026-07-04T01:35:24.912938Z",
+  "args": [
+    "pi05_baseline",
+    "--exp-name=pi05_baseline-1",
+    "--batch-size=64",
+    "--num-workers=4",
+    "--fsdp-devices=2",
+    "--dataset-path=/home/Dataset2/lq/datasets/robomme",
+    "--overwrite"
+  ],
+  "program": "/home/lq/VLA/lerobot/robomme_policy_learning/scripts/train.py",
+  "codePath": "scripts/train.py",
+  "git": {
+    "remote": "https://github.com/Baixiaochi9449/robomme_policy_learning.git",
+    "commit": "8d27f325f065f6ef4a14ca2b5982a785aa752ac3"
+  },
+  "email": "jumbo3r@gmail.com",
+  "root": "/home/lq/VLA/lerobot/robomme_policy_learning",
+  "host": "ZjuServer145",
+  "executable": "/home/lq/VLA/lerobot/robomme_policy_learning/.venv/bin/python3",
+  "codePathLocal": "scripts/train.py",
+  "cpu_count": 96,
+  "cpu_count_logical": 192,
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "gpu_count": 6,
+  "disk": {
+    "/": {
+      "total": "7618596642816",
+      "used": "6923664084992"
+    }
+  },
+  "memory": {
+    "total": "878817140736"
+  },
+  "cpu": {
+    "count": 96,
+    "countLogical": 192
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    },
+    {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memoryTotal": "102641958912",
+      "cudaCores": 24064
+    }
+  ],
+  "cudaVersion": "13.0"
+}
