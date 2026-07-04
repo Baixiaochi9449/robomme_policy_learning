@@ -551,7 +551,7 @@ class TrainConfig:
             raise ValueError("Cannot resume and overwrite at the same time.")
 
 
-OPENPI_DATA_HOME = os.getenv("OPENPI_DATA_HOME", "~/.cache/openpi")
+OPENPI_DATA_HOME = os.getenv("OPENPI_DATA_HOME", "/home/lq/.cache/openpi")
 
 _CONFIGS = [
     TrainConfig(
